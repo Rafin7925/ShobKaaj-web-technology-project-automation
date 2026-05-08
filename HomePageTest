@@ -1,0 +1,87 @@
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebElement;
+import org.testng.annotations.Test;
+import java.time.Duration;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+
+public class HomePageTest extends BaseTest {
+
+    String loginURL = "http://localhost:8080/project-simulator-ShobKaaj/Management/Shared/MVC/html/auth.php";
+
+    // Login first then check homepage
+    private void loginFirst() throws InterruptedException {
+        driver.get(loginURL);
+        Thread.sleep(2000);
+
+        WebElement emailField = driver.findElement(By.name("email"));
+        WebElement passField = driver.findElement(By.name("password"));
+
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1];" +
+                        "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
+                        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                emailField, "rafin7925@gmail.com"
+        );
+
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1];" +
+                        "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
+                        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                passField, "12345678"
+        );
+
+        Thread.sleep(500);
+
+        WebElement btn = driver.findElement(By.cssSelector("button[type='submit']"));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        Thread.sleep(3000);
+
+        // Dismiss alert if any
+        try {
+            driver.switchTo().alert().dismiss();
+            Thread.sleep(1000);
+        } catch (Exception e) {}
+
+        System.out.println("Logged in. Current URL: " + driver.getCurrentUrl());
+    }
+
+    @Test
+    public void testHomePageLoads() throws InterruptedException {
+        System.out.println("\nRunning: Home Page Load Test...");
+        loginFirst();
+
+        String title = driver.getTitle();
+        String url = driver.getCurrentUrl();
+        System.out.println("Page Title: " + title);
+        System.out.println("Page URL: " + url);
+
+        if (!url.contains("auth")) {
+            System.out.println("TEST PASSED - Home Page Loaded Successfully!");
+        } else {
+            System.out.println("TEST FAILED - Did not reach home page");
+        }
+    }
+
+    @Test
+    public void testHomePageElements() throws InterruptedException {
+        System.out.println("\nRunning: Home Page Elements Test...");
+        loginFirst();
+
+        // Check navigation exists
+        boolean navExists = !driver.findElements(By.tagName("nav")).isEmpty();
+        System.out.println("Navigation bar found: " + navExists);
+
+        // Check page has content
+        String bodyText = driver.findElement(By.tagName("body")).getText();
+        boolean hasContent = !bodyText.isEmpty();
+        System.out.println("Page has content: " + hasContent);
+
+        if (navExists && hasContent) {
+            System.out.println("TEST PASSED - Home Page Elements Found!");
+        } else {
+            System.out.println("TEST FAILED - Missing elements");
+        }
+    }
+}
