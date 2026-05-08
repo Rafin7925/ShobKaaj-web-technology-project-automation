@@ -1,0 +1,131 @@
+import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.annotations.Test;
+import java.time.Duration;
+
+public class LoginTest extends BaseTest {
+
+    String loginURL = "http://localhost:8080/project-simulator-ShobKaaj/Management/Shared/MVC/html/auth.php";
+
+    // Helper method to fill field using JavaScript
+    private void fillField(By locator, String value) {
+        WebElement field = driver.findElement(locator);
+        // Set value using JavaScript - bypasses custom JS event issues
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1];" +
+                        "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
+                        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                field, value
+        );
+    }
+
+    private void clickSubmit() {
+        WebElement btn = driver.findElement(
+                By.cssSelector(".sign-in button[type='submit']"));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].click();", btn);
+    }
+
+    private void handleAlert() {
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            Alert alert = wait.until(ExpectedConditions.alertIsPresent());
+            System.out.println("Alert: " + alert.getText());
+            alert.dismiss();
+        } catch (Exception e) {
+            System.out.println("No alert appeared");
+        }
+    }
+
+    // =====================
+    // TEST 1 - Valid Login
+    // =====================
+    @Test
+    public void testValidLogin() throws InterruptedException {
+        System.out.println("\nRunning Test 1: Valid Login...");
+        driver.get(loginURL);
+        Thread.sleep(5000);
+
+        fillField(By.id("login-email"), "shafkatdeep1009@gmail.com");
+        fillField(By.cssSelector(".sign-in input[name='password']"), "Abcd1234" +
+                "");
+        Thread.sleep(5000);
+
+        // Print values to confirm they are set
+        String emailVal = (String) ((JavascriptExecutor) driver)
+                .executeScript("return document.querySelector('#login-email').value;");
+        String passVal = (String) ((JavascriptExecutor) driver)
+                .executeScript("return document.querySelector('.sign-in input[name=\"password\"]').value;");
+        System.out.println("Email field value: " + emailVal);
+        System.out.println("Password field value: " + passVal);
+
+        clickSubmit();
+        Thread.sleep(5000);
+        handleAlert();
+        Thread.sleep(5000);
+
+        String currentURL = driver.getCurrentUrl();
+        System.out.println("URL after login: " + currentURL);
+
+        if (!currentURL.contains("auth")) {
+            System.out.println("TEST 1 PASSED - Valid Login Works!");
+        } else {
+            System.out.println("TEST 1 FAILED - Still on login page");
+        }
+    }
+
+    // ========================
+    // TEST 2 - Invalid Login
+    // ========================
+    @Test
+    public void testInvalidLogin() throws InterruptedException {
+        System.out.println("\nRunning Test 2: Invalid Login...");
+        driver.get(loginURL);
+        Thread.sleep(5000);
+
+        fillField(By.id("login-email"), "wrong@wrong.com");
+        fillField(By.cssSelector(".sign-in input[name='password']"), "wrongpassword");
+        Thread.sleep(5000);
+
+        clickSubmit();
+        Thread.sleep(5000);
+
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            Alert alert = wait.until(ExpectedConditions.alertIsPresent());
+            System.out.println("Alert: " + alert.getText());
+            alert.dismiss();
+            System.out.println("TEST 2 PASSED - Invalid Login Rejected!");
+        } catch (Exception e) {
+            if (driver.getCurrentUrl().contains("auth")) {
+                System.out.println("TEST 2 PASSED - Stayed on login page!");
+            } else {
+                System.out.println("TEST 2 FAILED");
+            }
+        }
+    }
+
+    // ========================
+    // TEST 3 - Empty Fields
+    // ========================
+    @Test
+    public void testEmptyFields() throws InterruptedException {
+        System.out.println("\nRunning Test 3: Empty Fields...");
+        driver.get(loginURL);
+        Thread.sleep(5000);
+
+        clickSubmit();
+        Thread.sleep(5000);
+
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            Alert alert = wait.until(ExpectedConditions.alertIsPresent());
+            System.out.println("Alert: " + alert.getText());
+            alert.dismiss();
+            System.out.println("TEST 3 PASSED - Empty fields caught!");
+        } catch (Exception e) {
+            System.out.println("TEST 3 FAILED - No validation for empty fields");
+        }
+    }
+}
